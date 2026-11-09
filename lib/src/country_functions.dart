@@ -32,16 +32,24 @@ class AdvanceCountryPicker {
 
     // Convert the list of maps to a list of Country objects
     var list = data.map((e) => Country.fromJson(e)).toList();
-    _countries = list;
-    if (filterCountries.isNotEmpty) {
-      _countries.clear();
-      for (var c in filterCountries) {
-        var x = list.firstWhere((e) =>
-            e.name.toString().toLowerCase() == c.toLowerCase() ||
-            e.countryCode.toLowerCase() == c.toLowerCase());
-        _countries.add(x);
+    if (filterCountries.isEmpty) {
+      _countries = list;
+      return _countries;
+    }
+
+    // Build the filtered list separately: clearing `list` itself would leave
+    // nothing to search. Entries that match no country are skipped.
+    final filtered = <Country>[];
+    for (var c in filterCountries) {
+      final key = c.toLowerCase();
+      for (final e in list) {
+        if (e.name.toLowerCase() == key || e.countryCode.toLowerCase() == key) {
+          if (!filtered.contains(e)) filtered.add(e);
+          break;
+        }
       }
     }
+    _countries = filtered;
     return _countries;
   }
 
@@ -63,10 +71,25 @@ class AdvanceCountryPicker {
         element.nationality.toLowerCase() == nationality.toLowerCase());
   }
 
+  /// Returns the country for [dialCode] (e.g. `+1`, `1`, `+44`), or `null`
+  /// if no country uses it.
+  ///
+  /// When several countries share a dial code (e.g. `+1`, `+7`, `+44`), the
+  /// main country for that code is returned (US for `+1`, RU for `+7`, ...).
   Future<Country?> getCountryByDialCode(String dialCode) async {
     List<Country> list = await loadCountries();
-    return list.firstWhere(
-        (element) => element.dialCode.toLowerCase() == dialCode.toLowerCase());
+    final digits = dialCode.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return null;
+    final normalized = '+$digits';
+    final matches = list.where((e) => e.dialCode == normalized).toList();
+    if (matches.isEmpty) return null;
+    final mainIso = countryCodeToIsoCode[digits]?.first.name;
+    if (mainIso != null) {
+      for (final c in matches) {
+        if (c.alpha2.toUpperCase() == mainIso) return c;
+      }
+    }
+    return matches.first;
   }
 
   Future<Country?> showCountryPickerSheet(BuildContext context,

@@ -29,12 +29,12 @@ class _CountryCodeWidgetState extends State<CountryCodeWidget> {
   AdvanceCountryPicker picker = AdvanceCountryPicker();
 
   _loadInitialCountry() async {
-    if (picker.countries.isEmpty) {
-      await picker.loadCountries(filterCountries: widget.filteredCountries);
-    }
-    if (picker.countries.isNotEmpty) {
-      _selectedCountry =
-          picker.countries.firstWhere((e) => e.name == "Pakistan");
+    final countries =
+        await picker.loadCountries(filterCountries: widget.filteredCountries);
+    if (!mounted) return;
+    if (countries.isNotEmpty) {
+      _selectedCountry = countries.firstWhere((e) => e.name == "Pakistan",
+          orElse: () => countries.first);
 
       setState(() {});
     }
@@ -54,9 +54,11 @@ class _CountryCodeWidgetState extends State<CountryCodeWidget> {
     return GestureDetector(
       onTap: () async {
         if (widget.selectorType == SelectorType.dialogue) {
-          _selectedCountry = await picker.showCountryPickerDialog(context);
+          _selectedCountry = await picker.showCountryPickerDialog(context,
+              filteredCountries: widget.filteredCountries);
         } else {
-          _selectedCountry = await picker.showCountryPickerSheet(context);
+          _selectedCountry = await picker.showCountryPickerSheet(context,
+              filteredCountries: widget.filteredCountries);
         }
         setState(() {});
         widget.onTap(_selectedCountry);
