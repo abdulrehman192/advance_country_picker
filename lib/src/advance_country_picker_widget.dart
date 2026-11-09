@@ -109,12 +109,11 @@ class AdvanceCountryPickerWidgetState
     setState(() {
       _isLoading = true;
     });
-    if (picker.countries.isEmpty) {
-      await picker.loadCountries(filterCountries: widget.filteredCountries);
-    }
-    _list = picker.countries;
+    _list =
+        await picker.loadCountries(filterCountries: widget.filteredCountries);
+    if (!mounted) return;
     setState(() {
-      _filteredList = _list;
+      _filteredList = List.of(_list);
       _isLoading = false;
     });
   }

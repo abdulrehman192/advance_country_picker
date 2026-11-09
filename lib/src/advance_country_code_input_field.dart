@@ -43,12 +43,12 @@ class PhoneNumberInputState extends State<AdvanceCountryCodeInputField> {
   AdvanceCountryPicker picker = AdvanceCountryPicker();
 
   _loadInitialCountry() async {
-    if (picker.countries.isEmpty) {
-      await picker.loadCountries(filterCountries: widget.filteredCountries);
-    }
-    if (picker.countries.isNotEmpty) {
-      _selectedCountry =
-          picker.countries.firstWhere((e) => e.name == "Pakistan");
+    final countries =
+        await picker.loadCountries(filterCountries: widget.filteredCountries);
+    if (!mounted) return;
+    if (countries.isNotEmpty) {
+      _selectedCountry = countries.firstWhere((e) => e.name == "Pakistan",
+          orElse: () => countries.first);
 
       setState(() {});
     }
